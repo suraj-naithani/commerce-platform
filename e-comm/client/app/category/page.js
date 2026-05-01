@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
 import FiltersSidebar from "../../components/FiltersSidebar";
 import ProductCard from "../../components/ProductCard";
+import Spinner from "../../components/Spinner";
 import { categories } from "../../lib/data";
 import { useGetProductCategoriesQuery, useGetProductsQuery } from "../../redux/api/productApi";
 
@@ -36,9 +37,14 @@ export default function CategoryPage() {
     category: selectedCategory,
     sort,
   });
-  const { data: categoryResponse } = useGetProductCategoriesQuery();
+  const {
+    data: categoryResponse,
+    isLoading: isCategoriesLoading,
+    isError: isCategoriesError,
+  } = useGetProductCategoriesQuery();
 
-  const filterCategories = categoryResponse?.data || categories.map((item) => item.name);
+  const isPageLoading = isLoading || isCategoriesLoading;
+  const filterCategories = categoryResponse?.data || [];
   const mappedProducts = useMemo(
     () =>
       ((Array.isArray(data) ? data : data?.data) || []).map((item, index) => ({
@@ -76,7 +82,10 @@ export default function CategoryPage() {
       <h1 className="text-3xl font-semibold text-[#2f453b]">Categories</h1>
       <p className="mt-2 text-[#6e877a]">Browse curated products with soft filtering and clean pagination UI.</p>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[280px_1fr]">
+      {isPageLoading ? (
+        <Spinner label="Loading products..." />
+      ) : (
+        <div className="mt-8 grid gap-8 lg:grid-cols-[280px_1fr]">
         <FiltersSidebar
           categories={filterCategories}
           selectedCategory={selectedCategory}
@@ -84,81 +93,85 @@ export default function CategoryPage() {
         />
 
         <div>
-          {isLoading && <p className="mb-4 text-sm text-[#6e877a]">Loading products...</p>}
-          {isError && <p className="mb-4 text-sm text-[#b75f5f]">Unable to load products.</p>}
-
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-[#5d7468]">Showing {data?.pagination?.total || 0} products</p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-[#4e675b]">Sort:</span>
-              <select
-                value={sort}
-                onChange={(event) => updateFilters({ sort: event.target.value })}
-                className="rounded-xl border border-[#d6e3cf] bg-white px-3 py-2 text-sm text-[#4f675b]"
-              >
-                <option value="">Featured</option>
-                <option value="asc">Price, low to high</option>
-                <option value="desc">Price, high to low</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {mappedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-          {!isLoading && !isError && mappedProducts.length === 0 && (
-            <p className="mt-4 text-sm text-[#6e877a]">No products available right now.</p>
-          )}
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-            <Link
-              href={buildPageHref(Math.max(1, safeCurrentPage - 1))}
-              aria-label="Previous page"
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                safeCurrentPage === 1
-                  ? "pointer-events-none border border-[#e1eadc] bg-[#f5f8f2] text-[#9eb0a6]"
-                  : "border border-[#d2e0cb] bg-white text-[#4e675b] hover:bg-[#f3f8ee]"
-              }`}
-            >
-              <FaAnglesLeft aria-hidden="true" />
-            </Link>
-
-            {pageNumbers.map((pageNumber, index) =>
-              pageNumber === "..." ? (
-                <span key={`ellipsis-${index}`} className="px-2 text-sm text-[#8ba095]">
-                  ...
-                </span>
-              ) : (
-                <Link
-                  key={pageNumber}
-                  href={buildPageHref(pageNumber)}
-                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                    pageNumber === safeCurrentPage
-                      ? "bg-[#6f9a5f] text-white shadow-sm"
-                      : "border border-[#d2e0cb] bg-white text-[#4e675b] hover:bg-[#f3f8ee]"
-                  }`}
-                >
-                  {pageNumber}
-                </Link>
-              ),
+          <>
+            {(isError || isCategoriesError) && (
+              <p className="mb-4 text-sm text-[#b75f5f]">Unable to load category data.</p>
             )}
 
-            <Link
-              href={buildPageHref(Math.min(totalPages, safeCurrentPage + 1))}
-              aria-label="Next page"
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                safeCurrentPage === totalPages
-                  ? "pointer-events-none border border-[#e1eadc] bg-[#f5f8f2] text-[#9eb0a6]"
-                  : "border border-[#d2e0cb] bg-white text-[#4e675b] hover:bg-[#f3f8ee]"
-              }`}
-            >
-              <FaAnglesRight aria-hidden="true" />
-            </Link>
-          </div>
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-[#5d7468]">Showing {data?.pagination?.total || 0} products</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[#4e675b]">Sort:</span>
+                  <select
+                    value={sort}
+                    onChange={(event) => updateFilters({ sort: event.target.value })}
+                    className="rounded-xl border border-[#d6e3cf] bg-white px-3 py-2 text-sm text-[#4f675b]"
+                  >
+                    <option value="">Featured</option>
+                    <option value="asc">Price, low to high</option>
+                    <option value="desc">Price, high to low</option>
+                  </select>
+                </div>
+              </div>
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {mappedProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+            {!isError && mappedProducts.length === 0 && (
+              <p className="mt-4 text-sm text-[#6e877a]">No products available right now.</p>
+            )}
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href={buildPageHref(Math.max(1, safeCurrentPage - 1))}
+                aria-label="Previous page"
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
+                  safeCurrentPage === 1
+                    ? "pointer-events-none border border-[#e1eadc] bg-[#f5f8f2] text-[#9eb0a6]"
+                    : "border border-[#d2e0cb] bg-white text-[#4e675b] hover:bg-[#f3f8ee]"
+                }`}
+              >
+                <FaAnglesLeft aria-hidden="true" />
+              </Link>
+
+                {pageNumbers.map((pageNumber, index) =>
+                  pageNumber === "..." ? (
+                    <span key={`ellipsis-${index}`} className="px-2 text-sm text-[#8ba095]">
+                      ...
+                    </span>
+                  ) : (
+                    <Link
+                      key={pageNumber}
+                      href={buildPageHref(pageNumber)}
+                      className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                        pageNumber === safeCurrentPage
+                          ? "bg-[#6f9a5f] text-white shadow-sm"
+                          : "border border-[#d2e0cb] bg-white text-[#4e675b] hover:bg-[#f3f8ee]"
+                      }`}
+                    >
+                      {pageNumber}
+                    </Link>
+                  ),
+                )}
+
+              <Link
+                href={buildPageHref(Math.min(totalPages, safeCurrentPage + 1))}
+                aria-label="Next page"
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
+                  safeCurrentPage === totalPages
+                    ? "pointer-events-none border border-[#e1eadc] bg-[#f5f8f2] text-[#9eb0a6]"
+                    : "border border-[#d2e0cb] bg-white text-[#4e675b] hover:bg-[#f3f8ee]"
+                }`}
+              >
+                <FaAnglesRight aria-hidden="true" />
+              </Link>
+            </div>
+          </>
         </div>
       </div>
+      )}
     </div>
   );
 }

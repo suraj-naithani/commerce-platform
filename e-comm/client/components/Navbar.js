@@ -7,7 +7,7 @@ export default function Navbar({ products, categories }) {
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="text-xl font-bold tracking-tight text-[#2f453b]">
-            Petal Pantry
+            CartNest
           </Link>
           <nav className="hidden items-center gap-4 text-sm text-[#587165] md:flex">
             <Link href="/">Home</Link>

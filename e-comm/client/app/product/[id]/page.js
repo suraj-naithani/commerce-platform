@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Button from "../../../components/Button";
 import ProductCard from "../../../components/ProductCard";
+import Spinner from "../../../components/Spinner";
 import { useGetProductByIdQuery, useGetProductsQuery } from "../../../redux/api/productApi";
 
 export default function ProductPage() {
@@ -52,7 +53,7 @@ export default function ProductPage() {
   const activeImage = productImages.includes(selectedImage) ? selectedImage : defaultImage;
 
   if (isLoading) {
-    return <p className="text-sm text-[#6c8578]">Loading product...</p>;
+    return <Spinner label="Loading product..." />;
   }
 
   if (isError || !product) {
