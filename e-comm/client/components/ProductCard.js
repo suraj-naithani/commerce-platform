@@ -1,9 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/slices/cartSlice";
 import Button from "./Button";
 
 export default function ProductCard({ product }) {
+  const dispatch = useDispatch();
   const imageSrc = product.image || "/file.svg";
   const description = product.description || "Premium pet nutrition crafted for daily wellness.";
+
+  const handleAddToCart = () => {
+    dispatch(addToCart(product));
+  };
 
   return (
     <article className="flex h-full flex-col rounded-2xl border border-[#e2ebdd] bg-white p-4 shadow-sm">
@@ -17,7 +26,9 @@ export default function ProductCard({ product }) {
         <p className="line-clamp-2 text-sm text-[#7d9388]">{description}</p>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-base font-semibold text-[#395648]">${product.price ?? 0}</span>
-          <Button className="px-4 py-2 text-xs">Add to cart</Button>
+          <Button className="px-4 py-2 text-xs" onClick={handleAddToCart}>
+            Add to cart
+          </Button>
         </div>
       </div>
     </article>

@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { useDispatch } from "react-redux";
 import Button from "../../../components/Button";
 import ProductCard from "../../../components/ProductCard";
 import Spinner from "../../../components/Spinner";
+import { addToCart } from "../../../redux/slices/cartSlice";
 import { useGetProductByIdQuery, useGetProductsQuery } from "../../../redux/api/productApi";
 
 export default function ProductPage() {
+  const dispatch = useDispatch();
   const params = useParams();
   const id = params?.id;
   const { data: productData, isLoading, isError } = useGetProductByIdQuery(id, { skip: !id });
@@ -61,6 +64,10 @@ export default function ProductPage() {
     return <p className="text-sm text-[#b75f5f]">Unable to load this product.</p>;
   }
 
+  const handleAddToCart = () => {
+    dispatch(addToCart(product));
+  };
+
   return (
     <div>
       <div className="grid gap-8 rounded-3xl bg-white p-8 shadow-sm lg:grid-cols-2">
@@ -102,7 +109,7 @@ export default function ProductPage() {
             </p>
           </div>
           <div className="mt-6">
-            <Button>Add to cart</Button>
+            <Button onClick={handleAddToCart}>Add to cart</Button>
           </div>
 
           <div className="mt-8 space-y-3">
