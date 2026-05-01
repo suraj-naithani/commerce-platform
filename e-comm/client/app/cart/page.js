@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Button from "../../components/Button";
 import CartItem from "../../components/CartItem";
 import { products } from "../../lib/data";
@@ -34,7 +35,9 @@ export default function CartPage() {
         <div className="mt-4 border-t border-[#e2ebdd] pt-4 text-base font-semibold text-[#2f453b]">
           Total: ${total + 5}
         </div>
-        <Button className="mt-5 w-full">Proceed to checkout</Button>
+        <Link href="/checkout" className="mt-5 block">
+          <Button className="w-full">Proceed to checkout</Button>
+        </Link>
       </aside>
     </div>
   );

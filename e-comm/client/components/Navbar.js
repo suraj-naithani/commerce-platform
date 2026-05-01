@@ -13,7 +13,6 @@ export default function Navbar({ products, categories }) {
             <Link href="/">Home</Link>
             <Link href="/category/dog-food">Categories</Link>
             <Link href="/cart">Cart</Link>
-            <Link href="/checkout">Checkout</Link>
           </nav>
         </div>
         <SearchBar products={products} categories={categories} />
