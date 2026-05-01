@@ -16,7 +16,7 @@ export default function CartPage() {
     () => cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0),
     [cartItems],
   );
-  const shipping = 5;
+  const shipping = cartItems.length === 0 ? 0 : total > 50 ? 0 : 5;
   const grandTotal = total + shipping;
 
   const handleIncrement = (itemId) => {
