@@ -8,7 +8,7 @@ const crypto = require("crypto");
 // ─── config ──────────────────────────────────────────────────────────────────
 
 const BASE_URL = "https://bombaygrocers.ca";
-const OUTPUT_PATH = path.resolve(__dirname, "data", "products.json");
+const OUTPUT_PATH = path.resolve(__dirname, "..", "data", "products.json");
 const CONFIG_PATH = path.resolve(__dirname, "categories.config.json");
 
 const PAGE_LIMIT = 250;

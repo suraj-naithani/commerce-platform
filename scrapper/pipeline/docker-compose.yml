@@ -1,0 +1,14 @@
+# Elasticsearch 8 for the Dagster pipeline (Stage 2).
+# From this folder: docker compose up -d
+# Then create the `products` index (see README) and set ELASTICSEARCH_URL=http://localhost:9200
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.5.0
+    container_name: ecommerce-elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
