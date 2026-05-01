@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import SearchBar from "./SearchBar";
 
-export default function Navbar({ products, categories }) {
+export default function Navbar() {
   const cartItems = useSelector((state) => state.cart.items);
   const cartCount = useMemo(
     () => cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
@@ -32,7 +32,7 @@ export default function Navbar({ products, categories }) {
             </Link>
           </nav>
         </div>
-        <SearchBar products={products} categories={categories} />
+        <SearchBar />
       </div>
     </header>
   );

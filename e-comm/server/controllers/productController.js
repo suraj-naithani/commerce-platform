@@ -1,4 +1,5 @@
 const pool = require("../db/postgres");
+const es = require("../services/elasticsearch");
 
 const getProducts = async (req, res) => {
   const page = Math.max(1, Number.parseInt(req.query.page || "1", 10));
@@ -111,8 +112,58 @@ const getProductById = async (req, res) => {
   }
 };
 
+const searchProducts = async (req, res) => {
+  const query = (req.query.q || "").trim();
+  const size = Math.min(20, Math.max(1, Number.parseInt(req.query.size || "8", 10)));
+
+  if (!query || query.length < 2) {
+    return res.json({ data: [] });
+  }
+
+  try {
+    const index = process.env.ELASTICSEARCH_INDEX || "products";
+    const shouldQueries = [
+      { match_phrase_prefix: { name: { query, boost: 8 } } },
+      { match_phrase_prefix: { category: { query, boost: 3 } } },
+      { match_phrase_prefix: { subcategory: { query, boost: 3 } } },
+      {
+        multi_match: {
+          query,
+          fields: ["name^5", "category^2", "subcategory^2", "description"],
+          type: "best_fields",
+          operator: "and",
+        },
+      },
+    ];
+
+    const response = await es.search({
+      index,
+      size,
+      query: {
+        bool: {
+          should: shouldQueries,
+          minimum_should_match: 1,
+        },
+      },
+      min_score: 0.5,
+    });
+
+    const hits = response?.hits?.hits || [];
+    const products = hits.map((hit) => ({
+      id: String(hit._source?.id ?? hit._id),
+      ...hit._source,
+    }));
+
+    res.json({ data: products });
+  } catch (error) {
+    console.error("Error searching products in Elasticsearch:", error.message);
+    res.status(500).json({ message: "Failed to search products" });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
   getProductCategories,
+  searchProducts,
 };

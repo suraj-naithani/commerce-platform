@@ -29,6 +29,10 @@ export const productApi = createApi({
       query: () => "/api/products/categories",
       providesTags: ["Product"],
     }),
+    searchProducts: builder.query({
+      query: ({ q, size = 8 }) => `/api/products/search?q=${encodeURIComponent(q)}&size=${size}`,
+      providesTags: ["Product"],
+    }),
     getProductById: builder.query({
       query: (id) => `/api/products/${id}`,
       providesTags: (result, error, id) => [{ type: "Product", id }],
@@ -36,4 +40,5 @@ export const productApi = createApi({
   }),
 });
 
-export const { useGetProductsQuery, useGetProductCategoriesQuery, useGetProductByIdQuery } = productApi;
+export const { useGetProductsQuery, useGetProductCategoriesQuery, useSearchProductsQuery, useGetProductByIdQuery } =
+  productApi;
