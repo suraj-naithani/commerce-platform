@@ -16,6 +16,7 @@ import psycopg2
 from dagster import job, op
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
 from psycopg2.extras import execute_values
 
 load_dotenv()
@@ -136,28 +137,49 @@ def save_to_postgres(data):
 @op
 def save_to_elasticsearch(data):
     es = _es_client()
+    batch_size = int(os.environ.get("ES_BATCH_SIZE", "1000"))
+    index_name = os.environ.get("ELASTICSEARCH_INDEX", "products")
     try:
+        actions = []
+        indexed = 0
         for cat in data:
             for p in cat["products"]:
                 product_id = p.get("id")
                 if not product_id:
                     continue
-                es.index(
-                    index="products",
-                    id=product_id,
-                    document={
-                        "id": product_id,
-                        "category": cat.get("category"),
-                        "subcategory": cat.get("subcategory"),
-                        "name": p.get("name"),
-                        "description": p.get("description"),
-                        "price": p.get("price"),
-                        "currency": p.get("currency"),
-                        "images": p.get("images", []),
-                        "availability": p.get("availability"),
-                    },
+                actions.append(
+                    {
+                        "_op_type": "index",
+                        "_index": index_name,
+                        "_id": product_id,
+                        "_source": {
+                            "id": product_id,
+                            "category": cat.get("category"),
+                            "subcategory": cat.get("subcategory"),
+                            "name": p.get("name"),
+                            "description": p.get("description"),
+                            "price": p.get("price"),
+                            "currency": p.get("currency"),
+                            "images": p.get("images", []),
+                            "availability": p.get("availability"),
+                        },
+                    }
                 )
-        logger.info("Indexed in Elasticsearch")
+                if len(actions) >= batch_size:
+                    success, _ = bulk(es, actions, refresh=False, request_timeout=120)
+                    indexed += success
+                    actions.clear()
+
+        if actions:
+            success, _ = bulk(es, actions, refresh=False, request_timeout=120)
+            indexed += success
+
+        logger.info(
+            "Indexed %s documents in Elasticsearch (index=%s, batch_size=%s)",
+            indexed,
+            index_name,
+            batch_size,
+        )
     except Exception:
         logger.exception("save_to_elasticsearch failed")
         raise
