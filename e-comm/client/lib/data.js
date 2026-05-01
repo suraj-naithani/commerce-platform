@@ -63,9 +63,9 @@ export const products = [
 ];
 
 export const testimonials = [
-  { id: "t1", name: "Aanya", quote: "Clean layout, fast checkout, and my weekly shopping is sorted in minutes." },
-  { id: "t2", name: "Rahul", quote: "Great product quality and pricing. The browsing experience feels smooth." },
-  { id: "t3", name: "Sara", quote: "CartNest makes repeat orders simple and super convenient." },
+  { id: "t1", name: "Priya", quote: "I can quickly find products, compare prices, and place orders without any hassle." },
+  { id: "t2", name: "Arjun", quote: "Fast checkout and clear product details make this one of the smoothest shopping experiences." },
+  { id: "t3", name: "Meera", quote: "Great deals, reliable delivery updates, and easy reorders every week." },
 ];
 
 export function getCategoryName(categoryId) {
