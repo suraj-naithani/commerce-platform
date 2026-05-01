@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Petal Pantry",
+  title: "Cart Nest",
   description: "Modern pet food ecommerce frontend",
 };
 
