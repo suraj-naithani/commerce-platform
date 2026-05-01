@@ -23,10 +23,10 @@ export default function Home() {
             Premium ingredients, transparent nutrition, and simple delivery.
           </p>
           <div className="mt-6 flex gap-3">
-            <Link href="/category/dog-food">
+            <Link href="/category">
               <Button>Shop now</Button>
             </Link>
-            <Link href="/category/cat-food">
+            <Link href="/category">
               <Button variant="secondary">Explore categories</Button>
             </Link>
           </div>
@@ -52,7 +52,7 @@ export default function Home() {
       <section>
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-[#2f453b]">Featured products</h2>
-          <Link href="/category/dog-food" className="text-sm font-medium text-[#6f9a5f]">
+          <Link href="/category" className="text-sm font-medium text-[#6f9a5f]">
             View all
           </Link>
         </div>

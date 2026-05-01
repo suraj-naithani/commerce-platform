@@ -11,7 +11,7 @@ export default function Navbar({ products, categories }) {
           </Link>
           <nav className="hidden items-center gap-4 text-sm text-[#587165] md:flex">
             <Link href="/">Home</Link>
-            <Link href="/category/dog-food">Categories</Link>
+            <Link href="/category">Categories</Link>
             <Link href="/cart">Cart</Link>
           </nav>
         </div>

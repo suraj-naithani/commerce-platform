@@ -1,28 +1,86 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import Button from "../../../components/Button";
 import ProductCard from "../../../components/ProductCard";
-import { products } from "../../../lib/data";
+import { useGetProductByIdQuery, useGetProductsQuery } from "../../../redux/api/productApi";
 
-export default async function ProductPage({ params }) {
-  const { id } = await params;
-  const product = products.find((item) => item.id === id) || products[0];
-  const relatedProducts = products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 3);
+export default function ProductPage() {
+  const params = useParams();
+  const id = params?.id;
+  const { data: productData, isLoading, isError } = useGetProductByIdQuery(id, { skip: !id });
+  const { data: allProductsResponse } = useGetProductsQuery({ page: 1, limit: 100 });
+  const allProducts = useMemo(() => allProductsResponse?.data || [], [allProductsResponse]);
+
+  const product = useMemo(() => {
+    if (!productData) return null;
+    return {
+      ...productData,
+      id: String(productData.id),
+      image: productData.images?.[0] || productData.image || "/file.svg",
+      description: productData.description || "Premium pet nutrition crafted for daily wellness.",
+      ingredients: productData.ingredients || "Clean proteins, vegetables, and essential nutrients.",
+      category: productData.category || "dog-food",
+    };
+  }, [productData]);
+
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+    return allProducts
+      .filter((item) => String(item.id) !== String(product.id) && (item.category || "dog-food") === product.category)
+      .slice(0, 3)
+      .map((item) => ({
+        ...item,
+        id: String(item.id),
+        image: item.images?.[0] || item.image || "/file.svg",
+        description: item.description || "Premium pet nutrition crafted for daily wellness.",
+      }));
+  }, [allProducts, product]);
+
+  const productImages = useMemo(() => {
+    if (!productData) return [];
+    const fromApi = Array.isArray(productData.images) ? productData.images : [];
+    const fallback = productData.image ? [productData.image] : [];
+    const uniqueImages = [...new Set([...fromApi, ...fallback].filter(Boolean))];
+    return uniqueImages.slice(0, 2);
+  }, [productData]);
+
+  const [selectedImage, setSelectedImage] = useState("");
+  const defaultImage = productImages[0] || product?.image || "/file.svg";
+  const activeImage = productImages.includes(selectedImage) ? selectedImage : defaultImage;
+
+  if (isLoading) {
+    return <p className="text-sm text-[#6c8578]">Loading product...</p>;
+  }
+
+  if (isError || !product) {
+    return <p className="text-sm text-[#b75f5f]">Unable to load this product.</p>;
+  }
 
   return (
     <div>
       <div className="grid gap-8 rounded-3xl bg-white p-8 shadow-sm lg:grid-cols-2">
         <div className="grid gap-4">
-          <div className="flex h-80 items-center justify-center rounded-2xl bg-[#f3f8ee]">
-            <Image src={product.image} alt={product.name} width={96} height={96} />
+          <div className="flex h-80 items-center justify-center rounded-2xl bg-[#f3f8ee] p-4">
+            <img src={activeImage} alt={product.name} className="h-full w-full object-contain" />
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="flex h-20 items-center justify-center rounded-xl bg-[#f5f9f1]">
-                <Image src={product.image} alt={product.name} width={40} height={40} />
-              </div>
-            ))}
-          </div>
+          {productImages.length > 1 && (
+            <div className="grid grid-cols-2 gap-3">
+              {productImages.map((imageUrl) => (
+                <button
+                  key={imageUrl}
+                  type="button"
+                  onClick={() => setSelectedImage(imageUrl)}
+                  className={`flex h-20 items-center justify-center rounded-xl bg-[#f5f9f1] p-2 ${activeImage === imageUrl ? "ring-2 ring-[#6f9a5f]" : ""
+                    }`}
+                >
+                  <img src={imageUrl} alt={product.name} className="h-full w-full object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
@@ -49,7 +107,7 @@ export default async function ProductPage({ params }) {
       <section className="mt-14">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-[#2f453b]">Related products</h2>
-          <Link href={`/category/${product.category}`} className="text-sm font-medium text-[#6f9a5f]">
+          <Link href={`/category?category=${encodeURIComponent(product.category)}&page=1`} className="text-sm font-medium text-[#6f9a5f]">
             More in this category
           </Link>
         </div>

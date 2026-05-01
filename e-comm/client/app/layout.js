@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { categories, products } from "../lib/data";
+import { ReduxProvider } from "../redux/reduxProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,9 +27,11 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#f7fbf3] text-[#2f453b]">
-        <Navbar products={products} categories={categories} />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">{children}</main>
-        <Footer />
+        <ReduxProvider>
+          <Navbar products={products} categories={categories} />
+          <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">{children}</main>
+          <Footer />
+        </ReduxProvider>
       </body>
     </html>
   );
