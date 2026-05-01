@@ -22,8 +22,9 @@ export default function ProductPage() {
       id: String(productData.id),
       image: productData.images?.[0] || productData.image || "/file.svg",
       description: productData.description || "Premium pet nutrition crafted for daily wellness.",
-      ingredients: productData.ingredients || "Clean proteins, vegetables, and essential nutrients.",
-      category: productData.category || "dog-food",
+      category: productData.category || "General",
+      subcategory: productData.subcategory || "General",
+      availability: productData.availability || "unknown",
     };
   }, [productData]);
 
@@ -88,6 +89,18 @@ export default function ProductPage() {
           <h1 className="text-3xl font-semibold text-[#2f453b]">{product.name}</h1>
           <p className="mt-2 text-xl font-semibold text-[#476556]">${product.price}</p>
           <p className="mt-4 text-[#6c8578]">{product.description}</p>
+          <div className="mt-4 grid gap-2 rounded-xl border border-[#d9e6d3] bg-[#fbfdf9] p-4 text-sm text-[#5e766a]">
+            <p>
+              <span className="font-medium text-[#2f453b]">Category:</span> {product.category}
+            </p>
+            <p>
+              <span className="font-medium text-[#2f453b]">Subcategory:</span> {product.subcategory}
+            </p>
+            <p>
+              <span className="font-medium text-[#2f453b]">Availability:</span>{" "}
+              {String(product.availability).replaceAll("_", " ")}
+            </p>
+          </div>
           <div className="mt-6">
             <Button>Add to cart</Button>
           </div>
@@ -96,10 +109,6 @@ export default function ProductPage() {
             <details open className="rounded-xl border border-[#d9e6d3] bg-[#fbfdf9] p-4">
               <summary className="cursor-pointer font-medium text-[#2f453b]">Description</summary>
               <p className="mt-2 text-sm text-[#6c8578]">{product.description}</p>
-            </details>
-            <details className="rounded-xl border border-[#d9e6d3] bg-[#fbfdf9] p-4">
-              <summary className="cursor-pointer font-medium text-[#2f453b]">Ingredients / details</summary>
-              <p className="mt-2 text-sm text-[#6c8578]">{product.ingredients}</p>
             </details>
           </div>
         </div>
