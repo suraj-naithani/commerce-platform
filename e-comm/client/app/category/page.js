@@ -29,7 +29,7 @@ export default function CategoryPage() {
   const selectedCategory = searchParams.get("category") || "";
   const sort = searchParams.get("sort") || "";
   const currentPage = Number.isNaN(pageParam) ? 1 : Math.max(pageParam, 1);
-  const pageSize = 6;
+  const pageSize = 9;
 
   const { data, isLoading, isError } = useGetProductsQuery({
     page: currentPage,
