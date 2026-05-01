@@ -85,7 +85,15 @@ def save_to_postgres(data):
                         INSERT INTO products
                         (id, category, subcategory, name, description, price, currency, images, availability)
                         VALUES %s
-                        ON CONFLICT (id) DO NOTHING
+                        ON CONFLICT (id) DO UPDATE SET
+                            category = EXCLUDED.category,
+                            subcategory = EXCLUDED.subcategory,
+                            name = EXCLUDED.name,
+                            description = EXCLUDED.description,
+                            price = EXCLUDED.price,
+                            currency = EXCLUDED.currency,
+                            images = EXCLUDED.images,
+                            availability = EXCLUDED.availability
                         """,
                         rows,
                         template="(%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)",
@@ -99,7 +107,15 @@ def save_to_postgres(data):
                 INSERT INTO products
                 (id, category, subcategory, name, description, price, currency, images, availability)
                 VALUES %s
-                ON CONFLICT (id) DO NOTHING
+                ON CONFLICT (id) DO UPDATE SET
+                    category = EXCLUDED.category,
+                    subcategory = EXCLUDED.subcategory,
+                    name = EXCLUDED.name,
+                    description = EXCLUDED.description,
+                    price = EXCLUDED.price,
+                    currency = EXCLUDED.currency,
+                    images = EXCLUDED.images,
+                    availability = EXCLUDED.availability
                 """,
                 rows,
                 template="(%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)",
@@ -123,14 +139,22 @@ def save_to_elasticsearch(data):
     try:
         for cat in data:
             for p in cat["products"]:
+                product_id = p.get("id")
+                if not product_id:
+                    continue
                 es.index(
                     index="products",
-                    id=p["id"],
+                    id=product_id,
                     document={
-                        "name": p["name"],
-                        "description": p["description"],
-                        "price": p["price"],
-                        "category": cat["category"],
+                        "id": product_id,
+                        "category": cat.get("category"),
+                        "subcategory": cat.get("subcategory"),
+                        "name": p.get("name"),
+                        "description": p.get("description"),
+                        "price": p.get("price"),
+                        "currency": p.get("currency"),
+                        "images": p.get("images", []),
+                        "availability": p.get("availability"),
                     },
                 )
         logger.info("Indexed in Elasticsearch")
