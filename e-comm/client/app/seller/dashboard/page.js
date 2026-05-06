@@ -31,6 +31,7 @@ export default function SellerDashboardPage() {
   const [state, setState] = useState({ loading: true, error: "", data: null });
   const [connectingStripe, setConnectingStripe] = useState(false);
   const [stripeError, setStripeError] = useState("");
+  const [stripeActionMessage, setStripeActionMessage] = useState("");
 
   useEffect(() => {
     if (!getMerchantToken()) router.push("/seller/login");
@@ -95,6 +96,7 @@ export default function SellerDashboardPage() {
                   try {
                     setConnectingStripe(true);
                     setStripeError("");
+                    setStripeActionMessage("");
                     const connect = await merchantApiFetch("/api/merchants/me/stripe/connect", {
                       method: "POST",
                       body: JSON.stringify({ country: "CA" }),
@@ -102,6 +104,7 @@ export default function SellerDashboardPage() {
                     if (!connect.response.ok) throw new Error(connect.data?.message || "Failed to connect Stripe");
                     const next = await merchantApiFetch("/api/merchants/me/dashboard");
                     if (next.response.ok) setState({ loading: false, error: "", data: next.data });
+                    setStripeActionMessage("Stripe account connected.");
                   } catch (e) {
                     setStripeError(e.message || "Failed to connect Stripe");
                   } finally {
@@ -116,6 +119,7 @@ export default function SellerDashboardPage() {
           </div>
         </div>
         {stripeError && <p className="mt-3 text-sm text-[#b75f5f]">{stripeError}</p>}
+        {stripeActionMessage && <p className="mt-3 text-sm text-[#5f786b]">{stripeActionMessage}</p>}
       </section>
 
       <section className="grid gap-4 md:grid-cols-4">
@@ -204,6 +208,62 @@ export default function SellerDashboardPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              setStripeError("");
+              const res = await merchantApiFetch("/api/merchants/me/stripe/onboarding-link", { method: "POST" });
+              if (!res.response.ok) {
+                setStripeError(res.data?.message || "Failed to create onboarding link");
+                return;
+              }
+              window.open(res.data.url, "_blank", "noopener,noreferrer");
+            }}
+            className="rounded-xl border border-[#d6e3cf] bg-white px-3 py-2 text-sm font-semibold text-[#365242] hover:bg-[#f4f8ef]"
+          >
+            Open onboarding (API link)
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setStripeError("");
+              const res = await merchantApiFetch("/api/merchants/me/stripe/payout-schedule", {
+                method: "POST",
+                body: JSON.stringify({ interval: "weekly", weekly_anchor: "friday", delay_days: 2 }),
+              });
+              if (!res.response.ok) {
+                setStripeError(res.data?.message || "Failed to set payout schedule");
+                return;
+              }
+              setStripeActionMessage("Payout schedule set to weekly (Friday).");
+            }}
+            className="rounded-xl border border-[#d6e3cf] bg-white px-3 py-2 text-sm font-semibold text-[#365242] hover:bg-[#f4f8ef]"
+          >
+            Set payout schedule (weekly)
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setStripeError("");
+              const res = await merchantApiFetch("/api/merchants/me/stripe/simulate-verification", {
+                method: "POST",
+                body: JSON.stringify({ scenario: "restricted" }),
+              });
+              if (!res.response.ok) {
+                setStripeError(res.data?.message || "Failed to simulate verification");
+                return;
+              }
+              const next = await merchantApiFetch("/api/merchants/me/dashboard");
+              if (next.response.ok) setState({ loading: false, error: "", data: next.data });
+              setStripeActionMessage("Stripe simulation ran (restricted).");
+            }}
+            className="rounded-xl border border-[#d6e3cf] bg-white px-3 py-2 text-sm font-semibold text-[#365242] hover:bg-[#f4f8ef]"
+          >
+            Simulate restricted (Stripe token)
+          </button>
         </div>
       </section>
     </div>

@@ -1,15 +1,3 @@
-function calculatePlatformFeeCents(orderAmountCents) {
-  const amount = Math.max(0, Number(orderAmountCents) || 0);
-
-  if (amount > 10000) return Math.round(amount * 0.1);
-  if (amount >= 5000) return Math.round(amount * 0.15);
-  return Math.round(amount * 0.2);
-}
-
-module.exports = {
-  calculateFeeCents: calculatePlatformFeeCents,
-};
-
 function calculateFee(amount) {
   const safeAmount = Number(amount);
 

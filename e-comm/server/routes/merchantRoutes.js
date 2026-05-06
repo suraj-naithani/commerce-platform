@@ -10,6 +10,9 @@ const {
   claimAllUnassignedProducts,
   setVerificationStatus,
   connectStripeAccount,
+  createStripeOnboardingLink,
+  setStripePayoutSchedule,
+  simulateStripeVerification,
   getStripeStatus,
 } = require("../controllers/merchantController");
 const { requireMerchantAuth } = require("../middleware/requireMerchantAuth");
@@ -28,6 +31,9 @@ router.post("/me/products/claim-unassigned", requireMerchantAuth, claimAllUnassi
 
 router.get("/me/stripe", requireMerchantAuth, getStripeStatus);
 router.post("/me/stripe/connect", requireMerchantAuth, connectStripeAccount);
+router.post("/me/stripe/onboarding-link", requireMerchantAuth, createStripeOnboardingLink);
+router.post("/me/stripe/payout-schedule", requireMerchantAuth, setStripePayoutSchedule);
+router.post("/me/stripe/simulate-verification", requireMerchantAuth, simulateStripeVerification);
 router.post("/me/verification", requireMerchantAuth, setVerificationStatus);
 
 module.exports = router;

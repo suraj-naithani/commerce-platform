@@ -41,6 +41,7 @@ async function ensureSchema() {
     CREATE TABLE IF NOT EXISTS orders (
       id SERIAL PRIMARY KEY,
       product_id TEXT,
+      product_ids TEXT,
       merchant_id INT REFERENCES merchants(id) ON DELETE SET NULL,
       total_amount DOUBLE PRECISION,
       platform_fee DOUBLE PRECISION,
@@ -55,6 +56,9 @@ async function ensureSchema() {
       status TEXT
     );
   `);
+
+  // Existing databases might have an older `orders` table without `product_ids`.
+  await pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_ids TEXT;");
 
   await pool.query(`
     ALTER TABLE products

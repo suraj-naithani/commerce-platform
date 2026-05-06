@@ -259,6 +259,146 @@ const connectStripeAccount = async (req, res) => {
   }
 };
 
+const createStripeOnboardingLink = async (req, res) => {
+  const stripe = getStripeClient();
+  if (!stripe) return res.status(500).json({ message: "Stripe secret key is not configured" });
+
+  const merchantId = req.merchant.id;
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+
+  try {
+    const existing = await pool.query(
+      "SELECT id, stripe_account_id FROM merchants WHERE id = $1",
+      [merchantId],
+    );
+    const merchant = existing.rows[0];
+    if (!merchant) return res.status(404).json({ message: "Merchant not found" });
+    if (!merchant.stripe_account_id) {
+      return res.status(400).json({ message: "Stripe account not connected for this merchant" });
+    }
+
+    const link = await stripe.accountLinks.create({
+      account: String(merchant.stripe_account_id),
+      refresh_url: `${clientUrl}/seller/dashboard?onboarding=refresh`,
+      return_url: `${clientUrl}/seller/dashboard?onboarding=return`,
+      type: "account_onboarding",
+    });
+
+    return res.json({ url: link.url, expires_at: link.expires_at });
+  } catch (error) {
+    const message = String(error?.message || "");
+    console.error("Error creating onboarding link:", message);
+    return res.status(500).json({ message: message || "Failed to create onboarding link" });
+  }
+};
+
+const setStripePayoutSchedule = async (req, res) => {
+  const stripe = getStripeClient();
+  if (!stripe) return res.status(500).json({ message: "Stripe secret key is not configured" });
+
+  const merchantId = req.merchant.id;
+  const { interval = "weekly", weekly_anchor = "friday", monthly_anchor = 1, delay_days = 2 } = req.body || {};
+
+  const scheduleInterval = String(interval || "weekly");
+  const schedule = { interval: scheduleInterval };
+  if (scheduleInterval === "weekly") schedule.weekly_anchor = String(weekly_anchor || "friday");
+  if (scheduleInterval === "monthly") schedule.monthly_anchor = Number(monthly_anchor || 1);
+  if (scheduleInterval !== "manual") schedule.delay_days = Number(delay_days || 2);
+
+  try {
+    const existing = await pool.query("SELECT id, stripe_account_id FROM merchants WHERE id = $1", [merchantId]);
+    const merchant = existing.rows[0];
+    if (!merchant) return res.status(404).json({ message: "Merchant not found" });
+    if (!merchant.stripe_account_id) {
+      return res.status(400).json({ message: "Stripe account not connected for this merchant" });
+    }
+
+    const account = await stripe.accounts.update(String(merchant.stripe_account_id), {
+      settings: { payouts: { schedule } },
+    });
+
+    return res.json({
+      stripe_account_id: merchant.stripe_account_id,
+      payouts: account.settings?.payouts || null,
+    });
+  } catch (error) {
+    const message = String(error?.message || "");
+    console.error("Error setting payout schedule:", message);
+    return res.status(500).json({ message: message || "Failed to set payout schedule" });
+  }
+};
+
+const simulateStripeVerification = async (req, res) => {
+  const stripe = getStripeClient();
+  if (!stripe) return res.status(500).json({ message: "Stripe secret key is not configured" });
+
+  const merchantId = req.merchant.id;
+  const { scenario = "" } = req.body || {};
+  const normalizedScenario = String(scenario || "").toLowerCase();
+
+  const scenarioToToken = {
+    verified: "tok_visa",
+    failed: "tok_visa_triggerChargeBlock",
+    restricted: "tok_visa_triggerTransferBlock",
+  };
+
+  const token = scenarioToToken[normalizedScenario];
+  if (!token) {
+    return res.status(400).json({ message: "Invalid scenario. Use: verified, failed, restricted" });
+  }
+
+  try {
+    const existing = await pool.query(
+      `
+      SELECT id, stripe_account_id
+      FROM merchants
+      WHERE id = $1
+      `,
+      [merchantId],
+    );
+    const merchant = existing.rows[0];
+    if (!merchant) return res.status(404).json({ message: "Merchant not found" });
+    if (!merchant.stripe_account_id) return res.status(400).json({ message: "Stripe account not connected" });
+
+    const connectedAccountId = String(merchant.stripe_account_id);
+
+    // Create a direct charge on the connected account using a Stripe test token.
+    const intent = await stripe.paymentIntents.create(
+      {
+        amount: 100,
+        currency: "usd",
+        confirm: true,
+        payment_method_data: { type: "card", card: { token } },
+        application_fee_amount: 0,
+      },
+      { stripeAccount: connectedAccountId },
+    );
+
+    const nextStatus = normalizedScenario === "verified" ? "verified" : normalizedScenario;
+    const updated = await pool.query(
+      `
+      UPDATE merchants
+      SET verification_status = $1, status = $1
+      WHERE id = $2
+      RETURNING id, name, email, stripe_account_id, COALESCE(verification_status, status, 'pending') AS verification_status
+      `,
+      [nextStatus, merchantId],
+    );
+
+    return res.json({
+      merchant: updated.rows[0],
+      stripe: { payment_intent_id: intent.id, status: intent.status },
+    });
+  } catch (error) {
+    const message = String(error?.message || "");
+    console.error("Error simulating verification:", message);
+    if (message.toLowerCase().includes("signed up for connect")) {
+      return res.status(400).json({ message: "Stripe Connect is not enabled for this Stripe account." });
+    }
+    return res.status(500).json({ message: message || "Failed to simulate verification" });
+  }
+};
+
 const getDashboard = async (req, res) => {
   const merchantId = req.merchant.id;
   try {
@@ -449,6 +589,9 @@ module.exports = {
   claimProducts,
   claimAllUnassignedProducts,
   connectStripeAccount,
+  createStripeOnboardingLink,
+  setStripePayoutSchedule,
+  simulateStripeVerification,
   setVerificationStatus,
   getStripeStatus,
 };

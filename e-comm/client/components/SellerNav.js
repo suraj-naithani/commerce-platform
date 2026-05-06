@@ -8,6 +8,8 @@ export default function SellerNav() {
   const pathname = usePathname();
   const router = useRouter();
 
+  if (pathname === "/seller/login") return null;
+
   const links = [
     { href: "/seller/dashboard", label: "Dashboard" },
     { href: "/seller/orders", label: "Orders" },
