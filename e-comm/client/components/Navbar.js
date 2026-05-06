@@ -4,8 +4,12 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import SearchBar from "./SearchBar";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/seller")) return null;
+
   const cartItems = useSelector((state) => state.cart.items);
   const cartCount = useMemo(
     () => cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),

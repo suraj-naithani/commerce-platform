@@ -15,6 +15,8 @@ export default function CheckoutSuccessPage() {
   const [status, setStatus] = useState("loading");
   const [email, setEmail] = useState("");
   const [amount, setAmount] = useState("");
+  const [flow, setFlow] = useState("");
+  const [transferId, setTransferId] = useState("");
 
   useEffect(() => {
     if (!sessionId) return;
@@ -27,6 +29,8 @@ export default function CheckoutSuccessPage() {
           dispatch(clearCart());
           setEmail(data.customer_email || "");
           setAmount(typeof data.amount_total === "number" ? (data.amount_total / 100).toFixed(2) : "");
+          setFlow(data.payment_flow || "");
+          setTransferId(data.stripe_transfer_id || "");
           setStatus("success");
         } else {
           setStatus("error");
@@ -70,6 +74,8 @@ export default function CheckoutSuccessPage() {
       <div className="mt-5 space-y-2 text-sm text-[#5f786b]">
         {email && <p>Receipt Email: {email}</p>}
         {amount && <p>Paid Amount: ${amount}</p>}
+        {flow && <p>Payment Flow: {flow}</p>}
+        {transferId && <p>Transfer ID: {transferId}</p>}
       </div>
       <Link href="/" className="mt-6 inline-block">
         <Button>Continue shopping</Button>

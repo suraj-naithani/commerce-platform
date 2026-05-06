@@ -2,15 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import Spinner from "../../components/Spinner";
 
 export default function CheckoutPage() {
   const { items: orderItems, hydrated } = useSelector((state) => state.cart);
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
+  const [paymentFlow, setPaymentFlow] = useState("auto");
   const [isPaying, setIsPaying] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const showFundFlowDemo =
+    searchParams?.get("demo") === "1" || String(process.env.NEXT_PUBLIC_DEMO_FUND_FLOW || "").toLowerCase() === "true";
   const itemCount = useMemo(
     () => orderItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
     [orderItems],
@@ -41,6 +46,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           email,
           items: orderItems,
+          flow: paymentFlow,
         }),
       });
 
@@ -78,6 +84,58 @@ export default function CheckoutPage() {
           <Input placeholder="City" />
           <Input placeholder="Postal code" />
         </form>
+
+        {showFundFlowDemo && (
+          <div className="mt-6 rounded-2xl border border-[#e2ebdd] bg-[#f7fbf3] p-4">
+            <p className="text-sm font-semibold text-[#2f453b]">Fund flow demo</p>
+            <p className="mt-1 text-xs text-[#6e877a]">
+              Choose a Stripe Connect flow for this checkout. If the merchant isn&apos;t connected/verified, the backend
+              falls back to a platform charge.
+            </p>
+            <div className="mt-3 grid gap-2 text-sm text-[#365242]">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentFlow"
+                  value="auto"
+                  checked={paymentFlow === "auto"}
+                  onChange={() => setPaymentFlow("auto")}
+                />
+                Auto (use destination charge when possible)
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentFlow"
+                  value="destination"
+                  checked={paymentFlow === "destination"}
+                  onChange={() => setPaymentFlow("destination")}
+                />
+                Destination charge (platform fee + transfer_data.destination)
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentFlow"
+                  value="separate"
+                  checked={paymentFlow === "separate"}
+                  onChange={() => setPaymentFlow("separate")}
+                />
+                Separate charges & transfers (transfer created after payment)
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentFlow"
+                  value="direct"
+                  checked={paymentFlow === "direct"}
+                  onChange={() => setPaymentFlow("direct")}
+                />
+                Direct charge (charge created on connected account)
+              </label>
+            </div>
+          </div>
+        )}
         {paymentError && <p className="mt-3 text-sm text-[#b75f5f]">{paymentError}</p>}
 
         <Button className="mt-6" disabled={itemCount === 0 || isPaying} onClick={handlePay}>
