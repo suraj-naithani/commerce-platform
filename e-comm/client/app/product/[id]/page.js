@@ -95,6 +95,11 @@ export default function ProductPage() {
         <div>
           <h1 className="text-3xl font-semibold text-[#2f453b]">{product.name}</h1>
           <p className="mt-2 text-xl font-semibold text-[#476556]">${product.price}</p>
+          {product.merchant_name && (
+            <p className="mt-2 text-sm font-medium text-[#6f9a5f]">
+              Sold by {product.merchant_name}
+            </p>
+          )}
           <p className="mt-4 text-[#6c8578]">{product.description}</p>
           <div className="mt-4 grid gap-2 rounded-xl border border-[#d9e6d3] bg-[#fbfdf9] p-4 text-sm text-[#5e766a]">
             <p>
@@ -109,7 +114,12 @@ export default function ProductPage() {
             </p>
           </div>
           <div className="mt-6">
-            <Button onClick={handleAddToCart}>Add to cart</Button>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={handleAddToCart}>Add to cart</Button>
+              <Link href={`/checkout?productId=${encodeURIComponent(product.id)}`}>
+                <Button variant="secondary">Buy now</Button>
+              </Link>
+            </div>
           </div>
 
           <div className="mt-8 space-y-3">
